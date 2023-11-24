@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <ctime>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -7,7 +8,13 @@
 #include <map>
 #include <stdlib.h> 
 
-using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
+std::string getIsoDate(){
+    time_t now;
+    time(&now);
+    char buf[sizeof "0000-00-00T00:00:00Z"];
+    strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
+    return buf;
+}
 
 namespace fs = std::filesystem;
 
@@ -46,17 +53,17 @@ std::map<std::string, std::string> getMetadata(std::ifstream &myfile){
     std::map<std::string, std::string> contentMap;
     std::string defaultValue;
     std::string key;
+    
     if(myfile.is_open()){
-        while(myfile){
             for (std::string line; std::getline(myfile, line); ) 
             {
+                
                 if(!startingLine&&line.find("---")!= std::string::npos){
                     startingLine = true;
                     continue;
                 }
 
                 if(startingLine&&line.find("---")== std::string::npos){
-                    // std::cout << line << std::endl;
                     //start extraction
                     dataTypeDelimeterPos=line.find(':');
                     defaultValue = line.substr(dataTypeDelimeterPos+1);    
@@ -72,7 +79,6 @@ std::map<std::string, std::string> getMetadata(std::ifstream &myfile){
                     break;
                 }
             }
-        }
     }
     return contentMap;
  
@@ -91,15 +97,13 @@ int main() {
     std::string newFileContent;
     std::ofstream newFile;
     
-    clear();
-
     if (ifs.good())
     {
         reader.parse(ifs, obj); // reader can also read strings
         location = obj["contentFolder"].asString();
     }
     
-    
+    clear();
     for (const std::string i : contentFolders){
         if (i.find(location) != std::string::npos){
             folder = i.substr(location.size()+1);
@@ -107,19 +111,18 @@ int main() {
         std::cout << folder << std::endl;
     }
 
-    std::cout<< "Which kind of file?" << std::endl;
-    std::cin >> contentTemplate;
-    std::cin.ignore();
+    std::cout<< "Which folder?:" << std::endl;
+    std::getline(std::cin, contentTemplate);
     
 
     for (const auto i : contentFolders){
         if(i.find(location+"/"+contentTemplate)!= std::string::npos){
             selectedfolder = i;
+            break;
         }
     }
-
+    
     myfile.open(readDirectory(selectedfolder).front());
-    clear();
 
     std::map<std::string, std::string> metadata = getMetadata(myfile);
 
@@ -129,11 +132,25 @@ int main() {
 
     for (const auto& x : metadata) {
         std::string input;
-        std::cout << x.first +" (enter to skip)"+ ":";
-        std::getline(std::cin, input);
+        if(x.first=="date"){
+            std::cout << x.first + " (today is "+getIsoDate()+"): ";
+            std::getline(std::cin, input);
+            if(input==""){
+                input = getIsoDate();
+            } 
+        }else if(obj.isMember(x.first)){
+            std::cout << x.first +" (default: "+x.second+"):";
+            std::getline(std::cin, input);
+            if(input==""){
+                input = x.second;    
+            }
+        }else{
+            std::cout << x.first + " (enter to skip): ";
+            std::getline(std::cin,input);
+        }
 
         if(input==""){
-            std::cout << "skipped data";
+            std::cout << "skipped data" << std::endl;
             continue;
         }
         
@@ -141,7 +158,7 @@ int main() {
             title = input;
         }
 
-        newFileContent.append(x.first+":");
+        newFileContent.append(x.first+": ");
         newFileContent.append(input);
         newFileContent.append("\n");
     }
@@ -152,8 +169,17 @@ int main() {
     spacer(3);
     
     std::cout << newFileContent;
+    std::string fileName ="";
+    
+    for(int i = 0;i<title.length();i++){
+        if(std::isspace(title[i])){
+            fileName = fileName+"-";
+        }else{
+            fileName = fileName+title[i];
+        }
+    }
 
-    newFile.open(location+"/"+folder+"/"+title+".md");
+    newFile.open(selectedfolder+"/"+fileName+".md");
     newFile << newFileContent;
     newFile.close();
 

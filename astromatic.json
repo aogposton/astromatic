@@ -1,4 +1,5 @@
 {
     "contentFolder":"./src/content",
-    "seperatorLength":3
+    "seperatorLength":3,
+    "author": "A.G.O. Poston"
 }
