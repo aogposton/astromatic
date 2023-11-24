@@ -2,7 +2,7 @@
 Tools to save you a few seconds when using astro.
 
 To use this tool,
-1. download the repo into a directory
+1. download the repo
 2. compile the source on your machine
 3. move the executable to the root directory of our astro folder
 4. start using commands
@@ -15,6 +15,13 @@ The astromatic json file should look like this:
 
 ```
 {
-    "contentFolder":"./src/content"
+    "contentFolder":"./src/content",
+    "author": "authors name"
 }
 ```
+
+If you have a key in the astromatic.json file that matches a key of your generated document it will be used as the default value.
+
+### Commands
+**./astromatic generate**
+generates a file in your content folder

@@ -84,7 +84,7 @@ std::map<std::string, std::string> getMetadata(std::ifstream &myfile){
  
 }
 
-int main() {
+void generateContent(){
     std::ifstream ifs("astromatic.json");
     Json::Reader reader;
     Json::Value obj;
@@ -181,6 +181,26 @@ int main() {
 
     newFile.open(selectedfolder+"/"+fileName+".md");
     newFile << newFileContent;
+    std::cout << std::endl;
     newFile.close();
+}
 
+int main(int argc, char** argv) {
+    if(argc<=1){
+        std::string arg;
+        std::cout << "which script?:"<< std::endl;
+        std::getline(std::cin,arg);
+
+        if(arg == "generate"){
+            generateContent();
+        }
+
+        return 0;
+    }
+
+    if(std::string(argv[1]) == "generate"){
+        generateContent();
+    }else{
+
+    }
 }
